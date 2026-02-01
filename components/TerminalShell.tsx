@@ -6,7 +6,7 @@ import { ProcessState, PermissionLevel } from '../types';
 export const TerminalShell: React.FC = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<string[]>(['ADIZILLA_01 [CORE_SHELL] READY.', 'Type "help" for a list of system operations.']);
-  const { processes, snapshots, integrityScore, permissionContext, dispatch, emitEvent, elevate, toggleGhostMode } = useOS();
+  const { processes, snapshots, integrityScore, permissionContext, dispatch, emitEvent, elevate, toggleGhostMode, toggleWindowedMode } = useOS();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,20 +36,21 @@ export const TerminalShell: React.FC = () => {
           '  ps              - List active process tree',
           '  kill [id]       - Terminate process node',
           '  nodes           - System health summary',
-          '  apk             - Initiate Android Build sequence',
+          '  apk             - Initiate Android Build',
+          '  exe             - Initiate Windows PE Build',
           '  ghost           - Toggle system ghost behavior',
           '  sudo [cmd]      - Elevate permission context',
-          '  snap take [msg] - Create system state snapshot',
+          '  snap take [msg] - Create system snapshot',
           '  clear           - Wipe console history'
         ]);
         break;
       case 'apk':
-        addLog([
-          'INITIATING ANDROID BINARY BUILD...',
-          'TARGET: ARM64-V8A',
-          'STATUS: RUNNING (SEE DEPLOY_HOST PANEL)'
-        ]);
+        addLog(['INITIATING ANDROID BINARY BUILD...', 'STATUS: RUNNING (SEE DEPLOY_HOST)']);
         emitEvent('BUILD_REQUEST', 'SHELL', { platform: 'android' });
+        break;
+      case 'exe':
+        addLog(['INITIATING WINDOWS PE BUILD SEQUENCE...', 'TARGET: x86_64_WIN_NT', 'STATUS: ACTIVE']);
+        emitEvent('BUILD_REQUEST', 'SHELL', { platform: 'windows' });
         break;
       case 'ps':
         const tree = processes.map(p => `  ${p.parentId ? ' └─ ' : ''}${p.id.padEnd(8)} | ${p.name.padEnd(14)} | ${p.state.padEnd(10)} | ${p.permission}`);

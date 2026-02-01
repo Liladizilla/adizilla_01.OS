@@ -8,6 +8,7 @@ interface OSContextType extends SystemState {
   emitEvent: (type: string, source: string, payload: any, severity?: SystemEvent['severity']) => void;
   toggleShadowMode: () => void;
   toggleGhostMode: () => void;
+  toggleWindowedMode: () => void;
   setBooted: (val: boolean) => void;
   elevate: (password: string) => boolean;
 }
@@ -27,6 +28,7 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [booted, setBooted] = useState(false);
   const [shadowMode, setShadowMode] = useState(false);
   const [ghostMode, setGhostMode] = useState(false);
+  const [windowedMode, setWindowedMode] = useState(false);
   const [permissionContext, setPermissionContext] = useState<PermissionLevel>(PermissionLevel.USER);
   const [processes, setProcesses] = useState<SystemProcess[]>([
     { id: 'kernel', name: 'CORE_KERNEL', state: ProcessState.RUNNING, weight: 5, memory: 12, lastUpdate: Date.now(), permission: PermissionLevel.SYSTEM },
@@ -60,7 +62,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     }
   }, []);
 
-  // Recalculate System Integrity
   useEffect(() => {
     const failed = processes.filter(p => p.state === ProcessState.FAILED).length;
     const degraded = processes.filter(p => p.state === ProcessState.DEGRADED).length;
@@ -133,6 +134,11 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     setGhostMode(prev => !prev);
     emitEvent('GHOST_MODE_TOGGLE', 'KERNEL', { active: !ghostMode }, 'info');
   };
+  const toggleWindowedMode = () => {
+    setWindowedMode(prev => !prev);
+    emitEvent('ENV_SHIFT', 'KERNEL', { mode: !windowedMode ? 'NATIVE_WINDOWS' : 'WEB_SHELL' }, 'info');
+  };
+
   const elevate = (pw: string) => {
     if (pw === 'root7701') {
       dispatch({ type: 'SET_PERMISSION', payload: PermissionLevel.SYSTEM });
@@ -142,7 +148,6 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     return false;
   };
 
-  // Background Auditor (Gemini)
   useEffect(() => {
     if (!booted || ghostMode) return;
     const interval = setInterval(async () => {
@@ -150,11 +155,10 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         const analysis = await intelligence.analyzeEvents(events.slice(-15));
         emitEvent('INTEL_AUDIT_COMPLETE', 'INTEL_AUDITOR', { summary: analysis }, 'info');
       }
-    }, 60000); // Audit every minute
+    }, 60000);
     return () => clearInterval(interval);
   }, [booted, events, ghostMode, emitEvent]);
 
-  // Automation Daemon
   useEffect(() => {
     if (!booted) return;
     const interval = setInterval(() => {
@@ -172,8 +176,8 @@ export const OSProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 
   return (
     <OSContext.Provider value={{
-      booted, shadowMode, ghostMode, processes, events, fileSystem, notifications, snapshots, integrityScore, permissionContext,
-      dispatch, emitEvent, toggleShadowMode, toggleGhostMode, setBooted, elevate
+      booted, shadowMode, ghostMode, windowedMode, processes, events, fileSystem, notifications, snapshots, integrityScore, permissionContext,
+      dispatch, emitEvent, toggleShadowMode, toggleGhostMode, toggleWindowedMode, setBooted, elevate
     }}>
       {children}
     </OSContext.Provider>

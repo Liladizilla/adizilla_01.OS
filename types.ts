@@ -51,7 +51,8 @@ export interface StateSnapshot {
 export interface SystemState {
   booted: boolean;
   shadowMode: boolean;
-  ghostMode: boolean; // Behavior shift vs UI disguise
+  ghostMode: boolean;
+  windowedMode: boolean; // Simulates running as a native Windows process
   processes: SystemProcess[];
   events: SystemEvent[];
   fileSystem: Record<string, FileEntry[]>;

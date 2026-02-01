@@ -11,7 +11,7 @@ const PLATFORMS = [
 ];
 
 export const PlatformManager: React.FC = () => {
-  const { emitEvent } = useOS();
+  const { emitEvent, toggleWindowedMode } = useOS();
   const [packaging, setPackaging] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -20,14 +20,26 @@ export const PlatformManager: React.FC = () => {
     setLogs([]);
     emitEvent('PLATFORM_BUILD_INIT', 'BRIDGE_SERVICE', { platform });
     
-    const buildSteps = [
-      "EXTRACTING SYSTEM BLOB...",
-      "COMPILING KERNEL WRAPPER...",
-      "INJECTING ANDROID MANIFEST...",
-      "SIGNING WITH DEBUG_KEY...",
-      "OPTIMIZING DEX BYTECODE...",
-      "BUILDING APK_PACKAGE..."
-    ];
+    let buildSteps = [];
+    if (platform === 'windows') {
+      buildSteps = [
+        "INITIALIZING MSVC TOOLCHAIN...",
+        "LINKING NT_KERNEL WRAPPERS...",
+        "EMBEDDING APPLICATION MANIFEST (WIN64)...",
+        "GENERATING PE32+ HEADER...",
+        "PACKAGING ADIZILLA_UI.DLL...",
+        "FINALIZING ADIZILLA_01.EXE..."
+      ];
+    } else {
+      buildSteps = [
+        "EXTRACTING SYSTEM BLOB...",
+        "COMPILING KERNEL WRAPPER...",
+        "INJECTING PACKAGE METADATA...",
+        "SIGNING BINARY IMAGE...",
+        "OPTIMIZING CODESTRIP...",
+        "BUILDING FINAL_PACKAGE..."
+      ];
+    }
 
     buildSteps.forEach((step, idx) => {
       setTimeout(() => {
@@ -36,7 +48,12 @@ export const PlatformManager: React.FC = () => {
           setTimeout(() => {
             setPackaging(null);
             emitEvent('PLATFORM_BUILD_READY', 'BRIDGE_SERVICE', { platform, status: 'complete' });
-            alert(`ANDROID PACKAGE READY.\n\nNOTE: You can now install this directly on your device by selecting "Add to Home Screen" from your browser menu. Adizilla is configured as a standalone Android Native-Web Bridge.`);
+            if (platform === 'windows') {
+              alert(`WINDOWS EXECUTABLE GENERATED.\n\nADIZILLA_01.EXE is now cached. Launching Windows Native Simulation...`);
+              toggleWindowedMode();
+            } else {
+              alert(`${platform.toUpperCase()} PACKAGE READY.\n\nNOTE: You can now install this via your system's "Add to Home Screen" or PWA manager.`);
+            }
           }, 1000);
         }
       }, (idx + 1) * 800);
@@ -81,7 +98,7 @@ export const PlatformManager: React.FC = () => {
       )}
 
       <div className="mt-8 p-3 bg-green-900/5 border border-green-900/20 text-[9px] text-green-800 leading-relaxed italic">
-        NOTE: ADIZILLA_01 leverages Progressive Web App (PWA) standards to provide an APK-equivalent experience without requiring sideloading. Once "installed," it runs in a standalone process with dedicated hardware access.
+        NOTE: ADIZILLA_01 produces platform-specific containers. Running the .exe simulation will wrap the environment in a simulated Windows Native Host.
       </div>
     </div>
   );
