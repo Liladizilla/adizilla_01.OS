@@ -1,0 +1,8 @@
+{
+  "name": "Copy of Adizilla_01",
+  "description": "A real-time, terminal-inspired personal operating system abstraction that prioritizes automation, intelligence, and system integrity over visual flair.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
